@@ -1,0 +1,159 @@
+{
+  "version": 2,
+  "settings": {
+    "particleCount": 9407,
+    "backgroundColors": {
+      "center": "#f5f0eb",
+      "edge": "#e8e0d8"
+    }
+  },
+  "camera": {
+    "keyframes": [
+      {
+        "id": "1775690293069-2",
+        "vh": 0,
+        "position": [
+          1.3316471170665791,
+          0.38841572943186503,
+          1.892325000437433
+        ],
+        "rotation": [
+          -0.3081871786366025,
+          0.928452143293666,
+          0.24957068257485057
+        ],
+        "fov": 50,
+        "depthNear": 1.8,
+        "depthFar": 3.3,
+        "easing": {
+          "preset": "smooth"
+        }
+      },
+      {
+        "id": "1775942173526-1",
+        "vh": 4,
+        "position": [
+          -0.802288316255,
+          0.1010111529541707,
+          2.785828262593235
+        ],
+        "rotation": [
+          -0.03624305288446963,
+          -0.28022692106609537,
+          -0.010027931291211259
+        ],
+        "fov": 50,
+        "depthNear": 0.6,
+        "depthFar": 4.7,
+        "easing": {
+          "preset": "smooth"
+        }
+      }
+    ]
+  },
+  "transform": {
+    "keyframes": [
+      {
+        "id": "1775942281249-4",
+        "vh": 0,
+        "position": [
+          0.08039755373239027,
+          -0.27429677917122613,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "scale": 1,
+        "easing": {
+          "preset": "smooth"
+        }
+      },
+      {
+        "id": "1775942326520-6",
+        "vh": 4,
+        "position": [
+          -0.7600814096407578,
+          0,
+          0.46461000440618827
+        ],
+        "rotation": [
+          0,
+          0.54,
+          0
+        ],
+        "scale": 1,
+        "easing": {
+          "preset": "smooth"
+        }
+      }
+    ]
+  },
+  "model": {
+    "keyframes": [
+      {
+        "id": "1775624746691-5",
+        "vh": 0,
+        "label": "Untitled",
+        "exrPath": "textures/12_9_2023_1775679515743.exr",
+        "positionCount": 11694,
+        "processingParams": {
+          "sampleCount": 12000,
+          "lloydPasses": 20,
+          "candidateMultiplier": 3,
+          "curvatureK": 8,
+          "curvatureGridCell": 0.15,
+          "curvatureThreshold": 0.45,
+          "noiseFreq": 1
+        }
+      },
+      {
+        "id": "1775625150387-1",
+        "vh": 4,
+        "label": "Untitled",
+        "exrPath": "textures/positions.exr",
+        "positionCount": 9407
+      },
+      {
+        "id": "1775943503025-1",
+        "vh": 8,
+        "label": "Untitled",
+        "exrPath": "textures/noise_1775943838560.exr",
+        "positionCount": 5000,
+        "processingParams": {
+          "sampleCount": 12000,
+          "lloydPasses": 2,
+          "candidateMultiplier": 3,
+          "curvatureK": 8,
+          "curvatureGridCell": 0.15,
+          "curvatureThreshold": 0.45,
+          "noiseFreq": 1
+        }
+      }
+    ],
+    "transitions": [
+      {
+        "id": "1775625159156-2",
+        "fromKeyframeId": "1775624746691-5",
+        "toKeyframeId": "1775625150387-1",
+        "cascadeOrigin": "top-down",
+        "cascadeSpread": 1,
+        "positionEasing": "ease-in-out-cubic",
+        "startOffset": 0,
+        "endOffset": 0
+      },
+      {
+        "id": "1775943525440-2",
+        "fromKeyframeId": "1775625150387-1",
+        "toKeyframeId": "1775943503025-1",
+        "cascadeOrigin": "bottom-up",
+        "cascadeSpread": 1,
+        "positionEasing": "smoothstep",
+        "startOffset": 0,
+        "endOffset": 0
+      }
+    ]
+  }
+}

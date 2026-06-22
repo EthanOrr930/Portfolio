@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -12,15 +13,87 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Hero intro — time-based staggered entrance for the name + subtitle.
+   Plays once on mount; the parent group handles scroll-driven exit. Each
+   child animates in sequence with `animation-delay`, `forwards` fill so
+   the end state is preserved. All easing uses the house `out` curve. */
+@keyframes hero-slide-in {
+  from {
+    opacity: 0;
+    transform: translate3d(-32px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.hero-intro {
+  opacity: 0;
+  transform: translate3d(-32px, 0, 0);
+  will-change: transform, opacity;
+  animation-name: hero-slide-in;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: forwards;
+}
+.hero-intro--title {
+  animation-delay: 100ms;    /* starts almost immediately on load */
+  animation-duration: 1800ms; /* slow, luxurious entrance */
+}
+.hero-intro--sub {
+  animation-delay: 600ms;    /* overlaps with the title mid-flight */
+  animation-duration: 1600ms; /* slightly shorter, same slow feel */
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-intro {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Project copy — slide-in-from-left, one-shot per reveal direction. The
+   data-shown flag is toggled by ProjectsViewport via useProjectReveal; the
+   CSS transition carries both the enter (shown=true) and exit (shown=false)
+   beats with separate durations + curves so motion flows consistently across
+   the slideshow. Motion tokens are passed in as CSS custom properties. */
+.project-copy-enter {
+  opacity: 0;
+  transform: translate3d(calc(var(--project-copy-distance, 40px) * -1), 0, 0);
+  will-change: transform, opacity;
+  transition:
+    opacity var(--project-copy-exit-dur, 220ms) var(--project-copy-exit-curve, cubic-bezier(0.64, 0, 0.78, 0)) var(--project-copy-delay, 0ms),
+    transform var(--project-copy-exit-dur, 220ms) var(--project-copy-exit-curve, cubic-bezier(0.64, 0, 0.78, 0)) var(--project-copy-delay, 0ms);
+}
+.project-copy-enter[data-shown="true"] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity var(--project-copy-enter-dur, 320ms) var(--project-copy-enter-curve, cubic-bezier(0.22, 1, 0.36, 1)) var(--project-copy-delay, 0ms),
+    transform var(--project-copy-enter-dur, 320ms) var(--project-copy-enter-curve, cubic-bezier(0.22, 1, 0.36, 1)) var(--project-copy-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .project-copy-enter,
+  .project-copy-enter[data-shown="true"] {
+    transition-duration: 0.01ms !important;
+    transform: translate3d(0, 0, 0) !important;
+  }
+}
+
+/* Recording-detail dashboard (mounted on the laptop screen). Scopes the admin
+   UI to Geist so it reads as part of this site, and keeps prose body in the
+   site type. Mono timestamps already map to --font-mono. */
+.dashboard {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  color: #18181b;
+}
+.dashboard .prose {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }

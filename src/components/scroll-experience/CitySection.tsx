@@ -120,7 +120,9 @@ export function CitySection({ scrollVhRef, startVh }: CitySectionProps) {
             {/* Opaque sky so the EffectComposer composites correctly; the
                 parent div's opacity still handles the fade-in. */}
             <color attach="background" args={[SKY]} />
-            <fog attach="fog" args={[SKY, FOG_NEAR, FOG_FAR]} />
+            {/* Start tight so the scene is fully fogged on frame 0 (buildings
+                hidden); CityContents recedes it open each frame. */}
+            <fog attach="fog" args={[SKY, FOG_INTRO_NEAR, FOG_INTRO_FAR]} />
             <hemisphereLight args={["#f3eee4", "#6f6c66", 1.1]} />
             <directionalLight position={[-60, 90, 50]} intensity={1.6} color="#fff6e8" />
             <directionalLight position={[60, 50, -30]} intensity={0.4} color="#cfd6e0" />
@@ -198,7 +200,6 @@ function CityContents({ scrollVhRef, startVh, copyRef, fadeRef }: CityContentsPr
   const flashRef = useRef<THREE.Mesh>(null);
   const spin = useRef({ angle: 0, vel: 0, lastVh: 0 });
   const boltJelly = useSingleBodyJelly();
-  const revealRef = useRef(0);
   const intro = useRef<IntroState>({ started: false, startClock: 0, t: 0, done: false, doneVh: 0 });
   const boltState = useRef<{ phase: "idle" | "firing" | "hold"; fireClock: number; holdVh: number }>({
     phase: "idle",
@@ -227,7 +228,6 @@ function CityContents({ scrollVhRef, startVh, copyRef, fadeRef }: CityContentsPr
     // sweeps past it (front-to-back), rather than popping up ahead of the fog.
     const fogProgress = it.started ? clamp01((now - it.startClock) / FOG_DURATION_SEC) : 0;
     const fe = easeOutCubic(fogProgress);
-    revealRef.current = fe;
     const fog = scene.fog as THREE.Fog | null;
     if (fog) {
       fog.near = FOG_INTRO_NEAR + (FOG_NEAR - FOG_INTRO_NEAR) * fe;
@@ -344,7 +344,7 @@ function CityContents({ scrollVhRef, startVh, copyRef, fadeRef }: CityContentsPr
         <planeGeometry args={[800, 800]} />
         <meshStandardMaterial color="#cfcabf" roughness={1} metalness={0} />
       </mesh>
-      <StreetCity revealRef={revealRef} />
+      <StreetCity />
       <VoxelModel
         url="/models/voxel-character.json"
         scale={MODEL_SCALE}

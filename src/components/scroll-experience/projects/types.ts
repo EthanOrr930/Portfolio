@@ -15,6 +15,8 @@ export interface Project {
   title: string;
   /** Scannable device notes — rendered as the shared em-dash bullet list. */
   bullets: string[];
+  /** Optional source repo — renders a link button under the copy when set. */
+  repoUrl?: string;
   Model: ComponentType;
 }
 

@@ -9,7 +9,7 @@ interface CausticsOptions {
   freeze: boolean;
 }
 
-const CAUSTIC_INTENSITY = 0.55;
+const CAUSTIC_INTENSITY = 0.65;
 
 /**
  * Projects animated ocean caustics onto a single cube's top faces by

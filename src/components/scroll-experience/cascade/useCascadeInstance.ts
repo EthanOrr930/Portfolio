@@ -7,6 +7,7 @@ import { prefersReducedMotion } from "../motionTokens";
 import { CascadeBaseResolver } from "./CascadeBaseResolver";
 import { CascadeMeshBuilder, type CascadeBundle } from "./CascadeMeshBuilder";
 import { CascadePhysicsDriver } from "./CascadePhysicsDriver";
+import { IntroController } from "./IntroController";
 import {
   CascadeUniformsSync,
   createCascadeUniforms,
@@ -24,6 +25,7 @@ export interface CascadeInstance {
   physics: CascadePhysicsDriver;
   tracker: MouseVelocityTracker;
   field: GelatinousField;
+  intro: IntroController;
 }
 
 /**
@@ -44,9 +46,11 @@ export function useCascadeInstance(): CascadeInstance {
   const trackerRef = useRef<MouseVelocityTracker | null>(null);
   const fieldRef = useRef<GelatinousField | null>(null);
   const resolverRef = useRef<CascadeBaseResolver | null>(null);
+  const introRef = useRef<IntroController | null>(null);
   if (!trackerRef.current) trackerRef.current = new MouseVelocityTracker();
   if (!fieldRef.current) fieldRef.current = new GelatinousField();
   if (!resolverRef.current) resolverRef.current = new CascadeBaseResolver();
+  if (!introRef.current) introRef.current = new IntroController(reducedMotion);
 
   const uniformsSync = useMemo(() => new CascadeUniformsSync(uniforms), [uniforms]);
   const bufferWriter = useMemo(() => new KeyframeBufferWriter(PARTICLE_COUNT), []);
@@ -64,5 +68,6 @@ export function useCascadeInstance(): CascadeInstance {
     physics,
     tracker: trackerRef.current,
     field: fieldRef.current,
+    intro: introRef.current,
   };
 }

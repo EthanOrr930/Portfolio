@@ -86,5 +86,20 @@ export class BezierEasing {
 
 /** Convenience: evaluate a preset by name at progress t. */
 export function evaluateBezierPreset(preset: BezierPreset, t: number): number {
-  return new BezierEasing(preset).evaluate(t);
+  return getBezierEasing(preset).evaluate(t);
+}
+
+// A BezierEasing built from a preset is immutable and its evaluate() is pure,
+// so one instance per preset can be shared. This avoids allocating a fresh
+// solver every frame on the scroll interpolation hot path.
+const presetCache = new Map<BezierPreset, BezierEasing>();
+
+/** Returns a shared, immutable BezierEasing for the given preset. */
+export function getBezierEasing(preset: BezierPreset): BezierEasing {
+  let easing = presetCache.get(preset);
+  if (!easing) {
+    easing = new BezierEasing(preset);
+    presetCache.set(preset, easing);
+  }
+  return easing;
 }

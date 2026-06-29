@@ -20,6 +20,7 @@ import {
 import { ProjectsSection } from "./ProjectsSection";
 import { CitySection } from "./CitySection";
 import { RecorderSection } from "./RecorderSection";
+import { ContactSection } from "./contact/ContactSection";
 import { HeroText } from "./HeroText";
 import { BackgroundGradient } from "../particle-scene/BackgroundGradient";
 import { PostProcessing } from "../particle-scene/PostProcessing";
@@ -43,6 +44,12 @@ const CITY_VH = 3.5;
 // finale (turn on → record → laptop handoff), so its vh is just a dwell band.
 const RECORDER_START_VH = CITY_START_VH + CITY_VH; // ≈ where the copy slides out
 const RECORDER_VH = 3;
+// Contact finale — folding paper-airplane experience. A cream panel slides up
+// out of Project 03 the moment the recorder dwell ends; interactive thereafter,
+// so its vh is just the slide-up plus a rest band to dwell in.
+const CONTACT_START_VH = RECORDER_START_VH + RECORDER_VH;
+const CONTACT_SLIDE_VH = 1.0;
+const CONTACT_REST_VH = 1.8;
 
 // ---------------------------------------------------------------------------
 // EXR decoding (same as editor's useModelKeyframeLoader)
@@ -349,7 +356,13 @@ export default function ScrollExperience() {
   const projectsStartVh = 6.5;
   // Scroll height accounts for the fall extending past maxVh + panel + rest.
   const projectsExtraVh =
-    (fallEndVh - maxVh) + PROJECTS_SLIDE_VH + PROJECTS_REST_VH + CITY_VH + RECORDER_VH;
+    (fallEndVh - maxVh) +
+    PROJECTS_SLIDE_VH +
+    PROJECTS_REST_VH +
+    CITY_VH +
+    RECORDER_VH +
+    CONTACT_SLIDE_VH +
+    CONTACT_REST_VH;
   const { scrollVhRef, totalHeight } = useScrollVh(maxVh, projectsExtraVh);
 
   if (error) {
@@ -378,7 +391,13 @@ export default function ScrollExperience() {
           // fill-rate bound, so retina 2× roughly doubled fragment cost for
           // little visible gain. 1.5 keeps it crisp and runs far cooler.
           dpr={[1, 1.5]}
-          gl={{ antialias: true, toneMapping: THREE.NoToneMapping }}
+          // antialias:false on purpose — <PostProcessing> below mounts an
+          // EffectComposer with multisampling={4}, so the scene is rendered
+          // into an MSAA render target and that is the effective antialiasing.
+          // The default drawing buffer only ever receives the composer's
+          // fullscreen output pass (no geometric edges), so context-level MSAA
+          // there is pure overhead with no visible effect.
+          gl={{ antialias: false, toneMapping: THREE.NoToneMapping }}
         >
           <BackgroundGradient />
 
@@ -417,6 +436,15 @@ export default function ScrollExperience() {
         scrollVhRef={scrollVhRef}
         mountVh={RECORDER_START_VH - 2.5}
         fallbackVh={RECORDER_START_VH + 1}
+      />
+
+      {/* Contact finale — paper sheet that tilts to the cursor, then folds into
+          a plane and flies off on send. Slides up out of Project 03. */}
+      <ContactSection
+        scrollVhRef={scrollVhRef}
+        startVh={CONTACT_START_VH}
+        slideDurationVh={CONTACT_SLIDE_VH}
+        mountVh={CONTACT_START_VH - 1.5}
       />
     </>
   );

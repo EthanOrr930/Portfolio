@@ -1,19 +1,20 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, ComponentProps } from "react";
 
 /**
- * Typography primitives for the Projects section. Match the HeroText
- * system (same fonts, sizing/tracking, colors) so the projects read as
- * continuations of the same type hierarchy.
+ * Site-wide typography primitives — ONE hierarchy everywhere (hero, projects,
+ * skills, future sections). Compose copy through these; never hand-roll type
+ * styles at call sites.
  *
- *   ProjectEyebrow    — Geist Mono, uppercase, wide-tracked label
- *   ProjectHeadline   — Fraunces serif, display size, tight tracking
- *   ProjectBulletList — Geist Sans bullets, sentence case, em-dash marker —
- *                       the single shared body voice for every project
+ *   Eyebrow    — Geist Mono, uppercase, wide-tracked label
+ *   Headline   — Fraunces serif, uppercase display (size: "hero" | "section")
+ *   Body       — Geist Sans, sentence case, relaxed paragraph
+ *   BulletList — Geist Sans em-dash bullets (the scannable body voice)
  *
- * Every project composes its copy through these primitives; do not hand-roll
- * inline styles at call sites. If a new style is needed, add a primitive here.
+ * `Project*` aliases are kept for the project copy blocks (their headline runs
+ * nowrap so its width defines the copy column). All forward ref + className +
+ * style, so scroll-animated callers (HeroText) can drive them directly.
  */
 
 const EYEBROW_STYLE: CSSProperties = {
@@ -27,9 +28,8 @@ const EYEBROW_STYLE: CSSProperties = {
   lineHeight: 1,
 };
 
-const HEADLINE_STYLE: CSSProperties = {
+const HEADLINE_BASE: CSSProperties = {
   fontFamily: "var(--font-fraunces), Georgia, serif",
-  fontSize: "clamp(2rem, 4.2vw, 3.75rem)",
   fontWeight: 300,
   fontVariationSettings: '"opsz" 144, "SOFT" 20',
   letterSpacing: "-0.025em",
@@ -37,16 +37,26 @@ const HEADLINE_STYLE: CSSProperties = {
   lineHeight: 0.95,
   color: "#1c1c1f",
   margin: 0,
-  // Single line — its rendered width defines the copy block, which the bullet
-  // list then stretches to fill (see BULLET_LIST_STYLE).
-  whiteSpace: "nowrap",
 };
 
-// Shared body voice — Geist Sans, sentence case (proper nouns/acronyms keep
-// their natural case), an em-dash marker in warm brown, grid hanging-indent so
-// wrapped lines align past the marker. Stretches to the headline width
-// (width:0 + minWidth:100%); marker/text colours are props so each project can
-// tint to its own backdrop, and the width can be overridden via `style`.
+const HEADLINE_SIZE = {
+  hero: "clamp(2.75rem, 6.5vw, 5.75rem)",
+  section: "clamp(2rem, 4.2vw, 3.75rem)",
+} as const;
+type HeadlineSize = keyof typeof HEADLINE_SIZE;
+
+const BODY_STYLE: CSSProperties = {
+  fontFamily: "var(--font-geist-sans), ui-sans-serif, sans-serif",
+  fontSize: "clamp(0.9rem, 1.1vw, 1.05rem)",
+  fontWeight: 300,
+  lineHeight: 1.55,
+  color: "#52525b",
+  margin: 0,
+};
+
+// Em-dash bullets — Geist Sans, sentence case, grid hanging-indent so wrapped
+// lines align past the marker. Stretches to the headline width (width:0 +
+// minWidth:100%); marker/text colours are props, width overridable via `style`.
 const BULLET_LIST_STYLE: CSSProperties = {
   fontFamily: "var(--font-geist-sans), ui-sans-serif, sans-serif",
   fontSize: "clamp(0.9rem, 1.1vw, 1.05rem)",
@@ -73,12 +83,30 @@ const BULLET_MARK_STYLE: CSSProperties = {
   fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
 };
 
-interface TypographyProps {
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
-  /** Forwarded for scroll/reveal data flags (data-shown, etc.). */
-  "data-shown"?: string;
+export function Eyebrow({ style, ...rest }: ComponentProps<"p">) {
+  return <p {...rest} style={{ ...EYEBROW_STYLE, ...style }} />;
+}
+
+interface HeadlineProps extends ComponentProps<"h2"> {
+  /** "hero" = oversized hero title, "section" = section header (default). */
+  size?: HeadlineSize;
+  /** Single line — used by project copy blocks whose width defines the column. */
+  nowrap?: boolean;
+  /** Heading level — "h1" for the page's hero title, "h2" elsewhere. */
+  as?: "h1" | "h2";
+}
+
+export function Headline({ size = "section", nowrap = false, as: Tag = "h2", style, ...rest }: HeadlineProps) {
+  return (
+    <Tag
+      {...rest}
+      style={{ ...HEADLINE_BASE, fontSize: HEADLINE_SIZE[size], whiteSpace: nowrap ? "nowrap" : undefined, ...style }}
+    />
+  );
+}
+
+export function Body({ style, ...rest }: ComponentProps<"p">) {
+  return <p {...rest} style={{ ...BODY_STYLE, ...style }} />;
 }
 
 interface BulletListProps {
@@ -92,21 +120,7 @@ interface BulletListProps {
   "data-shown"?: string;
 }
 
-export function ProjectEyebrow(props: TypographyProps) {
-  return <p {...props} style={{ ...EYEBROW_STYLE, ...props.style }} />;
-}
-
-export function ProjectHeadline(props: TypographyProps) {
-  return <h2 {...props} style={{ ...HEADLINE_STYLE, ...props.style }} />;
-}
-
-export function ProjectBulletList({
-  items,
-  markerColor = "#7a6a4f",
-  textColor = "#52525b",
-  style,
-  ...rest
-}: BulletListProps) {
+export function BulletList({ items, markerColor = "#7a6a4f", textColor = "#52525b", style, ...rest }: BulletListProps) {
   return (
     <ul {...rest} style={{ ...BULLET_LIST_STYLE, color: textColor, ...style }}>
       {items.map((item, i) => (
@@ -119,4 +133,11 @@ export function ProjectBulletList({
       ))}
     </ul>
   );
+}
+
+// ── Back-compat aliases for the project copy blocks ──
+export const ProjectEyebrow = Eyebrow;
+export const ProjectBulletList = BulletList;
+export function ProjectHeadline(props: ComponentProps<"h2">) {
+  return <Headline nowrap {...props} />;
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { curves, toCssBezier, easing, prefersReducedMotion } from "./motionTokens";
+import { Eyebrow, Headline, Body } from "./projects/ProjectTypography";
 
 /**
  * HeroText — two scroll-driven text blocks overlaid on the particle scene.
@@ -59,6 +60,12 @@ export function HeroText({
   useEffect(() => {
     const reduced = prefersReducedMotion();
 
+    // Hoisted out of the rAF tick — these depend only on values in the effect
+    // dependency array, so they're stable for the lifetime of the effect.
+    const aboutRange = Math.max(1e-4, aboutInEndVh - aboutInStartVh);
+    const staggerOffsets = [0, 0.15, 0.32, 0.45]; // vh offsets per element
+    const aboutEls = [aboutLabelRef, aboutHeadingRef, aboutBodyRef, aboutBody2Ref];
+
     let raf = 0;
     const tick = () => {
       const vh = scrollVhRef.current ?? 0;
@@ -89,10 +96,6 @@ export function HeroText({
 
       // Per-element staggered slide-in — label first, heading next, body last.
       // Each gets its own scroll window offset within the aboutIn range.
-      const aboutRange = Math.max(1e-4, aboutInEndVh - aboutInStartVh);
-      const staggerOffsets = [0, 0.15, 0.32, 0.45]; // vh offsets per element
-      const aboutEls = [aboutLabelRef, aboutHeadingRef, aboutBodyRef, aboutBody2Ref];
-
       for (let i = 0; i < aboutEls.length; i++) {
         const el = aboutEls[i].current;
         if (!el) continue;
@@ -149,37 +152,12 @@ export function HeroText({
           willChange: "transform, opacity",
         }}
       >
-        <h1
-          className="hero-intro hero-intro--title"
-          style={{
-            fontFamily: "var(--font-fraunces), Georgia, serif",
-            fontSize: "clamp(2.75rem, 6.5vw, 5.75rem)",
-            fontWeight: 300,
-            fontVariationSettings: '"opsz" 144, "SOFT" 20',
-            letterSpacing: "-0.025em",
-            textTransform: "uppercase",
-            lineHeight: 0.95,
-            color: "#1c1c1f",
-            margin: 0,
-          }}
-        >
+        <Headline as="h1" size="hero" className="hero-intro hero-intro--title">
           Ethan Orr
-        </h1>
-        <p
-          className="hero-intro hero-intro--sub text-zinc-500"
-          style={{
-            fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
-            fontSize: "clamp(0.68rem, 0.82vw, 0.82rem)",
-            fontWeight: 400,
-            letterSpacing: "0.32em",
-            textTransform: "uppercase",
-            lineHeight: 1,
-            margin: 0,
-            marginTop: "1rem",
-          }}
-        >
+        </Headline>
+        <Eyebrow className="hero-intro hero-intro--sub" style={{ marginTop: "1rem" }}>
           Engineer &nbsp;·&nbsp; Designer &nbsp;·&nbsp; Entrepreneur
-        </p>
+        </Eyebrow>
       </div>
 
       {/* About block — right-justified, anchored by right edge at 8vw from
@@ -196,84 +174,36 @@ export function HeroText({
           willChange: "transform, opacity",
         }}
       >
-        <p
+        <Eyebrow
           ref={aboutLabelRef}
-          style={{
-            fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
-            fontSize: "clamp(0.68rem, 0.82vw, 0.82rem)",
-            fontWeight: 400,
-            letterSpacing: "0.32em",
-            textTransform: "uppercase",
-            color: "#7a6a4f",
-            margin: 0,
-            marginBottom: "0.9rem",
-            opacity: 0,
-            willChange: "transform, opacity",
-          }}
+          style={{ marginBottom: "0.9rem", opacity: 0, willChange: "transform, opacity" }}
         >
           About
-        </p>
-        <h2
+        </Eyebrow>
+        <Headline
           ref={aboutHeadingRef}
-          style={{
-            fontFamily: "var(--font-fraunces), Georgia, serif",
-            fontSize: "clamp(2rem, 4.2vw, 3.75rem)",
-            fontWeight: 300,
-            fontVariationSettings: '"opsz" 144, "SOFT" 20',
-            letterSpacing: "-0.025em",
-            textTransform: "uppercase",
-            lineHeight: 0.95,
-            color: "#1c1c1f",
-            margin: 0,
-            maxWidth: "11ch",
-            opacity: 0,
-            willChange: "transform, opacity",
-          }}
+          size="section"
+          style={{ maxWidth: "11ch", opacity: 0, willChange: "transform, opacity" }}
         >
           I build the unimaginable.
-        </h2>
-        <p
+        </Headline>
+        {/* Narrower than the heading so the copy wraps to more lines. */}
+        <Body
           ref={aboutBodyRef}
-          className="text-zinc-600"
-          style={{
-            fontFamily: "var(--font-geist-sans), ui-sans-serif, sans-serif",
-            fontSize: "clamp(0.9rem, 1.1vw, 1.05rem)",
-            fontWeight: 300,
-            lineHeight: 1.55,
-            margin: 0,
-            marginTop: "1.4rem",
-            // Narrower than the heading so the copy wraps to more lines with
-            // tighter justification.
-            width: "34ch",
-            textAlign: "justify",
-            opacity: 0,
-            willChange: "transform, opacity",
-          }}
+          style={{ marginTop: "1.4rem", width: "34ch", textAlign: "justify", opacity: 0, willChange: "transform, opacity" }}
         >
           Engineer, designer, entrepreneur — I build every layer, from the firmware
           on the microcontroller to the app on the screen. Idea to in-market —
           I take the whole thing across the line.
-        </p>
-        <p
+        </Body>
+        <Body
           ref={aboutBody2Ref}
-          className="text-zinc-600"
-          style={{
-            fontFamily: "var(--font-geist-sans), ui-sans-serif, sans-serif",
-            fontSize: "clamp(0.9rem, 1.1vw, 1.05rem)",
-            fontWeight: 300,
-            lineHeight: 1.55,
-            margin: 0,
-            marginTop: "1rem",
-            width: "34ch",
-            textAlign: "justify",
-            opacity: 0,
-            willChange: "transform, opacity",
-          }}
+          style={{ marginTop: "1rem", width: "34ch", textAlign: "justify", opacity: 0, willChange: "transform, opacity" }}
         >
           Custom builds for founders and teams: first-generation prototypes at
           professional-grade quality, firmware to app — whatever the solution
           demands.
-        </p>
+        </Body>
       </div>
     </div>
   );

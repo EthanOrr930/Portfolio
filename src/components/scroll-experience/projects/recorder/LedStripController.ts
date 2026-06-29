@@ -19,6 +19,12 @@ const _c = new THREE.Color();
 export class LedStripController {
   private materials: THREE.MeshStandardMaterial[] = [];
   private lights: THREE.PointLight[] = [];
+  // Reused per-LED return value — update() consumes it (copies the color)
+  // before the next ledFor() call, so a single pooled object is safe.
+  private readonly ledResult: { color: THREE.Color; intensity: number } = {
+    color: _c,
+    intensity: 0,
+  };
 
   setMaterials(mats: THREE.MeshStandardMaterial[]): void {
     this.materials = mats;
@@ -69,29 +75,35 @@ export class LedStripController {
         const head = ((clock * 1.4) % 1) * LED_COUNT;
         const raw = Math.abs(i - head);
         const dist = Math.min(raw, LED_COUNT - raw); // wrap-around chase
-        return { color: _c.copy(BOOT_COLOR), intensity: 0.15 + Math.max(0, 1 - dist * 0.7) * 6 };
+        return this.result(_c.copy(BOOT_COLOR), 0.15 + Math.max(0, 1 - dist * 0.7) * 6);
       }
       case "CONFIRM_START":
       case "CONFIRM_STOP": {
         const lit = holdProgress * LED_COUNT;
         const on = i < lit; // fill left → right
-        return { color: _c.copy(DEVICE_COLOR), intensity: on ? 7.0 : 0.1 };
+        return this.result(_c.copy(DEVICE_COLOR), on ? 7.0 : 0.1);
       }
       case "RECORDING": {
         const env = breathe(clock, pulseRateForTimeLeft(frac));
-        return { color: colorForTimeLeft(frac), intensity: 2.4 + env * 5.0 };
+        return this.result(colorForTimeLeft(frac), 2.4 + env * 5.0);
       }
       case "FINALIZING": {
         const head = Math.floor((clock * 6) % LED_COUNT);
         const on = i === head;
-        return { color: _c.copy(DEVICE_COLOR), intensity: on ? 7.5 : 0.12 };
+        return this.result(_c.copy(DEVICE_COLOR), on ? 7.5 : 0.12);
       }
       case "STANDBY": {
         const env = breathe(clock, 0.4);
-        return { color: _c.copy(DEVICE_COLOR), intensity: 2.0 + env * 3.0 };
+        return this.result(_c.copy(DEVICE_COLOR), 2.0 + env * 3.0);
       }
       default:
-        return { color: _c.copy(DEVICE_COLOR), intensity: 0.04 };
+        return this.result(_c.copy(DEVICE_COLOR), 0.04);
     }
+  }
+
+  private result(color: THREE.Color, intensity: number): { color: THREE.Color; intensity: number } {
+    this.ledResult.color = color;
+    this.ledResult.intensity = intensity;
+    return this.ledResult;
   }
 }

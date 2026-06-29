@@ -6,7 +6,7 @@ import type {
   PositionEasingType,
   CascadeOrigin,
 } from "./types";
-import { BezierEasing } from "./bezier";
+import { getBezierEasing } from "./bezier";
 
 // ---------------------------------------------------------------------------
 // Catmull-Rom spline helpers (ported from ScrollCanvas.tsx)
@@ -98,7 +98,7 @@ export function interpolateCamera(
 
   // Apply bezier easing from the destination keyframe
   const destKf = keyframes[index + 1];
-  const easing = new BezierEasing(destKf.easing.preset);
+  const easing = getBezierEasing(destKf.easing.preset);
   const t = easing.evaluate(progress);
 
   const i = index;
@@ -169,7 +169,7 @@ export function interpolateTransform(
   }
 
   const destKf = keyframes[index + 1];
-  const easing = new BezierEasing(destKf.easing.preset);
+  const easing = getBezierEasing(destKf.easing.preset);
   const t = easing.evaluate(progress);
 
   const i = index;
@@ -233,6 +233,20 @@ export interface ResolvedModelState {
   /** Depth fade values from camera interpolation should be applied separately */
 }
 
+const idToIndexCache = new WeakMap<ModelKeyframe[], Map<string, number>>();
+
+function getIdToIndex(keyframes: ModelKeyframe[]): Map<string, number> {
+  let lookup = idToIndexCache.get(keyframes);
+  if (!lookup) {
+    lookup = new Map<string, number>();
+    for (let i = 0; i < keyframes.length; i++) {
+      lookup.set(keyframes[i].id, i);
+    }
+    idToIndexCache.set(keyframes, lookup);
+  }
+  return lookup;
+}
+
 export function resolveModelState(
   keyframes: ModelKeyframe[],
   transitions: ModelTransition[],
@@ -249,11 +263,10 @@ export function resolveModelState(
 
   if (keyframes.length === 0) return defaultState;
 
-  // Build a keyframe id → index lookup
-  const idToIndex = new Map<string, number>();
-  for (let i = 0; i < keyframes.length; i++) {
-    idToIndex.set(keyframes[i].id, i);
-  }
+  // Keyframe id → index lookup. Cached per keyframe-array identity so the
+  // production useFrame loop doesn't rebuild this Map every frame (the array
+  // is loaded once and never mutated in place).
+  const idToIndex = getIdToIndex(keyframes);
 
   // Search all transitions to find one whose range covers the current vh
   for (const t of transitions) {

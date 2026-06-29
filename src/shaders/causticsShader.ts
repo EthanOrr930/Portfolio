@@ -17,7 +17,7 @@
 
 // Tuned for this scene's ~0.6-unit cube (reference used 0.24 on a much
 // larger body). Scale sets cell density across the top face.
-const CAUSTIC_SCALE = 3.4;
+const CAUSTIC_SCALE = 2.2;
 const CAUSTIC_CA = 0.022;
 
 const CAUSTICS_FUNCTIONS = /* glsl */ `
@@ -41,15 +41,17 @@ const CAUSTICS_FUNCTIONS = /* glsl */ `
     }
     c /= 5.0;
     c = 1.17 - pow(c, 1.4);
-    // Clamp >1 on purpose so peaks blow out → bloom sparkle.
-    return clamp(pow(abs(c), 6.0), 0.0, 1.6);
+    // Clamp >1 on purpose so peaks blow out → bloom sparkle. Lower gamma than
+    // the reference (6→3.5) so each band reads as a bold ribbon, not a string.
+    return clamp(pow(abs(c), 3.5), 0.0, 1.6);
   }
 
   // ── 2 octaves multiplied: sparse multi-scale filaments ────────────
   float causticStack(vec2 uv, float t) {
     float coarse = oceanCaustics(uv, t);
-    float fine = oceanCaustics(uv * 1.9 + vec2(13.1, 7.3), t * 1.35);
-    return coarse * (0.5 + 0.9 * fine);
+    // Lower-frequency, lighter-weight fine octave → fewer overlapping strands.
+    float fine = oceanCaustics(uv * 1.4 + vec2(13.1, 7.3), t * 1.35);
+    return coarse * (0.7 + 0.5 * fine);
   }
 
   // ── Animated Voronoi → F1 (nearest) / F2 (2nd nearest) ────────────
@@ -85,9 +87,11 @@ const CAUSTICS_FUNCTIONS = /* glsl */ `
       causticStack(uv, t),
       causticStack(uv - dir, t)
     );
-    vec2 v = causticVoronoi(uv * 0.62, t * 0.6);
-    float net = pow(1.0 - smoothstep(0.0, 0.45, v.y - v.x), 4.0);
-    return warp * (0.35 + 2.1 * net);
+    // Larger Voronoi cells (0.62→0.42) = fewer strands; wider crease band
+    // (0.45→0.70) + gentler thinning curve (4→2) = bold lines, not hairlines.
+    vec2 v = causticVoronoi(uv * 0.42, t * 0.6);
+    float net = pow(1.0 - smoothstep(0.0, 0.70, v.y - v.x), 2.0);
+    return warp * (0.30 + 2.6 * net);
   }
 
   // ── Apply to surface: top-down projection + facing/depth mask ─────

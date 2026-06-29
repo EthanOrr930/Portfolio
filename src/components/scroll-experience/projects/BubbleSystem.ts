@@ -195,10 +195,10 @@ export class BubbleSystem {
 
   private advanceSlot(slot: BubbleSlot, delta: number): void {
     const c = this.config;
-    slot.vel.y = (slot.vel.y + c.buoyancy * delta) *
-      Math.exp(-c.riseDrag * delta);
-    slot.vel.x *= Math.exp(-c.riseDrag * delta);
-    slot.vel.z *= Math.exp(-c.riseDrag * delta);
+    const dragFactor = Math.exp(-c.riseDrag * delta);
+    slot.vel.y = (slot.vel.y + c.buoyancy * delta) * dragFactor;
+    slot.vel.x *= dragFactor;
+    slot.vel.z *= dragFactor;
     // Lateral wobble on both axes (phase-offset so it traces a slow oval)
     // plus a lower-frequency ambient meander — gives each bubble an
     // independent floaty drift instead of a single-axis shimmy.

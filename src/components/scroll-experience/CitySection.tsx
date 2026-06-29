@@ -35,9 +35,16 @@ const CAM_END_ROT = new THREE.Euler(-0.39, -0.28, -0.1);
 
 // Intro is TIME-BASED — it plays automatically when you scroll into the section
 // (smoother + more motion-designed than scrubbing it by scroll).
-// Unmount the city Canvas this far past startVh — after the dissolve into the
-// recorder, so the third WebGL context is freed (not left rendering, covered).
-const ACTIVE_SPAN = 4.5;
+// Keep the city Canvas mounted this far past startVh — through the recorder
+// window — so scrolling back in re-bounces the buildings (a fresh remount would
+// replay the intro behind the recorder's cover instead). Unmounts only past the
+// finale. Trade: the third WebGL context lives a little longer.
+const ACTIVE_SPAN = 7;
+// Mount the Canvas this far BEFORE startVh so three.js compiles the city's
+// materials + window shader + post passes during the QUIET Hydro Cube dwell —
+// not on the frame the cubes free-fall into the city (which stacked the city's
+// first-frame compile on the cube scene's heaviest work → a visible hitch).
+const WARM_LEAD_VH = 4.5;
 const INTRO_DUR = 1.4; // fly-in + building reveal (seconds) — snappy
 const CAM_FRAC = 0.8; // camera locks at this fraction — in place BEFORE buildings settle
 const FADE_FRAC = 0.25; // section fades fully in this early → clear view almost immediately
@@ -95,7 +102,7 @@ export function CitySection({ scrollVhRef, startVh }: CitySectionProps) {
     // time-based (driven from the intro timeline in CityContents).
     const onScroll = () => {
       const vh = scrollVhRef.current ?? 0;
-      const near = vh > startVh - 2.5 && vh < startVh + ACTIVE_SPAN;
+      const near = vh > startVh - WARM_LEAD_VH && vh < startVh + ACTIVE_SPAN;
       setActive((prev) => (prev === near ? prev : near));
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -115,7 +122,10 @@ export function CitySection({ scrollVhRef, startVh }: CitySectionProps) {
             camera={{ position: CAM_START_POS.toArray(), fov: 40, far: 6000 }}
             dpr={[1, 1.5]}
             gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
-            style={{ background: "transparent" }}
+            // pe:none so this z-20 canvas never intercepts clicks meant for the
+            // projects panel below it (the city has no 3D interaction; its Play
+            // button is separate DOM). R3F otherwise forces the canvas to auto.
+            style={{ background: "transparent", pointerEvents: "none" }}
           >
             {/* Opaque sky so the EffectComposer composites correctly; the
                 parent div's opacity still handles the fade-in. */}
@@ -127,6 +137,7 @@ export function CitySection({ scrollVhRef, startVh }: CitySectionProps) {
             <directionalLight position={[-60, 90, 50]} intensity={1.6} color="#fff6e8" />
             <directionalLight position={[60, 50, -30]} intensity={0.4} color="#cfd6e0" />
             <CityContents scrollVhRef={scrollVhRef} startVh={startVh} copyRef={copyRef} fadeRef={fadeRef} />
+            <WarmCompile />
             <EffectComposer multisampling={4}>
               {/* High threshold so only the laser bolt + muzzle flash bloom,
                   not the bright cream sky. */}
@@ -144,6 +155,20 @@ export function CitySection({ scrollVhRef, startVh }: CitySectionProps) {
       <ProjectTwoCopy copyRef={copyRef} />
     </>
   );
+}
+
+/** Pre-links the city's materials + window shader on the first mounted frame so
+ *  the synchronous shader compile lands during the early (quiet) warm-up mount,
+ *  not lazily on the frame the user crosses into the section. */
+function WarmCompile() {
+  const { gl, scene, camera } = useThree();
+  const done = useRef(false);
+  useFrame(() => {
+    if (done.current) return;
+    done.current = true;
+    gl.compile(scene, camera);
+  });
+  return null;
 }
 
 const _pos = new THREE.Vector3();
@@ -209,6 +234,7 @@ function CityContents({ scrollVhRef, startVh, copyRef, fadeRef }: CityContentsPr
   const textShown = useRef(false);
   const recorderFiredRef = useRef(false); // copy gone → recorder armed (dissolve out)
   const cityOpacity = useRef(0); // smoothed fade so the dissolve-out eases
+  const fogStartRef = useRef(0); // fog-recede clock — re-arms each time the city hides, so it replays on return
   const glowTex = useMemo(() => createBoltGlowTexture(), []);
 
   useFrame((state, dt) => {
@@ -222,17 +248,23 @@ function CityContents({ scrollVhRef, startVh, copyRef, fadeRef }: CityContentsPr
     camera.position.lerpVectors(CAM_START_POS, CAM_END_POS, e);
     camera.quaternion.slerpQuaternions(_qa, _qb, e);
 
-    // ── Fog recede + building reveal share ONE eased clock ──
-    // easeOut → the fog zooms out immediately (no ease-in lag); the buildings'
-    // reveal is locked to the same value so each rises as the fog's inner edge
-    // sweeps past it (front-to-back), rather than popping up ahead of the fog.
-    const fogProgress = it.started ? clamp01((now - it.startClock) / FOG_DURATION_SEC) : 0;
+    // ── Fog recede clock ── easeOut → the fog zooms out immediately (no
+    // ease-in lag). The clock re-arms whenever the city is fully hidden
+    // (dissolved into the recorder), so scrolling back in re-recedes the fog and
+    // the buildings re-bounce — while the camera/bolt intro still plays once.
+    const hidden = recorderFiredRef.current && cityOpacity.current < 0.08;
+    if (!it.started || hidden) fogStartRef.current = now;
+    const fogProgress = it.started && !hidden ? clamp01((now - fogStartRef.current) / FOG_DURATION_SEC) : 0;
     const fe = easeOutCubic(fogProgress);
     const fog = scene.fog as THREE.Fog | null;
     if (fog) {
       fog.near = FOG_INTRO_NEAR + (FOG_NEAR - FOG_INTRO_NEAR) * fe;
       fog.far = FOG_INTRO_FAR + (FOG_FAR - FOG_INTRO_FAR) * fe;
     }
+    // Buildings reveal off this LINEAR clock (not the eased fog.far) so each
+    // rank rises on an even cadence — the eased fog tail used to starve the
+    // outermost two, leaving them a beat behind. StreetCity reads it.
+    scene.userData.cityRevealProgress = fogProgress;
     if (fadeRef.current) {
       const introFade = it.started ? clamp01(it.t / FADE_FRAC) : 0;
       // Once the copy exits and the recorder takes over, dissolve the city out.

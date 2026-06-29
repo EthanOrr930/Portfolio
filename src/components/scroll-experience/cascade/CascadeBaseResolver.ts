@@ -57,6 +57,12 @@ export class CascadeBaseResolver {
   private scaleA!: Float32Array;
   private randoms!: Float32Array;
 
+  // Per-particle fall impulse direction (xyz) is a pure function of the
+  // immutable per-particle seeds, so it's computed once and reused every frame
+  // instead of running two Math.hypot per particle during the fall phase.
+  private impulseDirs: Float32Array | null = null;
+  private readonly impulseScratch = { x: 0, y: 0, z: 0 };
+
   private readonly main: MainState = {
     dirX: 0, dirY: -1, dirZ: 0, mode: 0,
     windowSize: 1, maxStart: 0, progress: 0, easing: 0,
@@ -75,7 +81,29 @@ export class CascadeBaseResolver {
     this.posA = posA;
     this.posB = posB;
     this.scaleA = scaleA;
-    this.randoms = randoms;
+    if (randoms !== this.randoms) {
+      this.randoms = randoms;
+      this.precomputeImpulseDirs();
+    }
+  }
+
+  private precomputeImpulseDirs(): void {
+    const count = this.randoms.length / 4;
+    const dirs = new Float32Array(count * 3);
+    for (let index = 0; index < count; index++) {
+      const i4 = index * 4;
+      const rx = this.randoms[i4]     * 2 - 1;
+      const rz = this.randoms[i4 + 2] * 2 - 1;
+      const rw = this.randoms[i4 + 3];
+      const sdLen = Math.hypot(rx, rz) || 1;
+      const sMag = 0.5 + rw * 0.5;
+      const nd = normalizeDirection((rx / sdLen) * sMag, 0.35, (rz / sdLen) * sMag);
+      const i3 = index * 3;
+      dirs[i3] = nd.x;
+      dirs[i3 + 1] = nd.y;
+      dirs[i3 + 2] = nd.z;
+    }
+    this.impulseDirs = dirs;
   }
 
   prepare(cs: CascadeState): void {
@@ -166,15 +194,12 @@ export class CascadeBaseResolver {
   }
 
   private computeImpulseDirection(index: number) {
-    const i4 = index * 4;
-    const rx = this.randoms[i4]     * 2 - 1;
-    const rz = this.randoms[i4 + 2] * 2 - 1;
-    const rw = this.randoms[i4 + 3];
-    const sdLen = Math.hypot(rx, rz) || 1;
-    const sMag = 0.5 + rw * 0.5;
-    const ix = (rx / sdLen) * sMag;
-    const iy = 0.35;
-    const iz = (rz / sdLen) * sMag;
-    return normalizeDirection(ix, iy, iz);
+    const dirs = this.impulseDirs!;
+    const i3 = index * 3;
+    const s = this.impulseScratch;
+    s.x = dirs[i3];
+    s.y = dirs[i3 + 1];
+    s.z = dirs[i3 + 2];
+    return s;
   }
 }

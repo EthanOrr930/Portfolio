@@ -5,7 +5,6 @@ import { useRef } from "react";
 const BUILT_IN_MODELS = [
   { name: "Brain", path: "/models/Brain_low_poly_obj.obj" },
   { name: "Heart", path: "/models/heart.glb" },
-  { name: "Rocket", path: "/models/rocket.glb" },
   { name: "Diamond", path: "/models/diamond.glb" },
   { name: "Lightbulb", path: "/models/lightbulb.glb" },
   { name: "Chat Bubble", path: "/models/chat-bubble.glb" },

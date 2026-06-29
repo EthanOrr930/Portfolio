@@ -75,6 +75,10 @@ export const cascadeVertexShader = /* glsl */ `
   // ── Uniforms ──────────────────────────────────────────────────────
   uniform float u_time;
 
+  // Load intro — 1 = figure assembled, 0 = particles scattered outward + spun.
+  // Driven once on first load, then exactly 1 forever after (no effect).
+  uniform float u_introProgress;
+
   // Cascade
   uniform float u_transitionProgress;
   uniform float u_cascadeSpread;
@@ -139,6 +143,10 @@ export const cascadeVertexShader = /* glsl */ `
   const float NOISE_FREQ = 1.0;
   const float COLOR_MIN = 0.25;
   const float COLOR_MAX = 0.55;
+  // Load-intro scatter: how far out (model units) particles begin, and how
+  // many radians they spiral around Y on the way in.
+  const float INTRO_DISTANCE = 1.0;
+  const float INTRO_SWIRL = 1.4;
 
   void main() {
     // ── Cascade: compute per-particle timing ──────────────────
@@ -173,6 +181,24 @@ export const cascadeVertexShader = /* glsl */ `
     // per-particle displacement driven by the gelatinous integrator.
     vec3 morphPos = mix(positionA, positionB, particleProgress);
     vec3 pos = morphPos + instanceOffset;
+
+    // ── Load intro: fly in from an outward, swirling scatter ──────────
+    // introAmt 1 → 0 over the one-shot load. Each particle starts pushed
+    // radially out from the figure's centre and spiralled around Y, then
+    // homes onto its rest position. Exactly 0 at u_introProgress == 1, so
+    // everything downstream (drift, fall, scroll) is untouched afterwards.
+    // introAmt 1 → 0, but dips slightly negative on the overshoot (particles
+    // sail past their rest spot before settling), so test the magnitude.
+    float introAmt = 1.0 - u_introProgress;
+    if (abs(introAmt) > 0.0001) {
+      vec3 introJitter = instanceRandom.xyz * 2.0 - 1.0;
+      vec3 introDir = normalize(morphPos + introJitter * 0.35 + vec3(0.0, 0.0001, 0.0));
+      float introReach = INTRO_DISTANCE * (0.55 + instanceRandom.w * 0.9);
+      vec3 introVec = introDir * introReach;
+      float introTwist = introAmt * INTRO_SWIRL * (0.6 + instanceRandom.w * 0.8);
+      introVec = rotationMatrix(vec3(0.0, 1.0, 0.0), introTwist) * introVec;
+      pos += introVec * introAmt;
+    }
 
     // ── Ambient float: position-seeded phase → clustered drift ──
     // Phase is keyed off the *current* morph position (not the raw keyframe

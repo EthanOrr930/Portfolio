@@ -97,3 +97,97 @@ body {
 .dashboard .prose {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
+
+/* ── Contact section ───────────────────────────────────────────────── */
+/* On-paper form fields — ink on paper: faint placeholder, accent underline
+   on focus, no other chrome so the sheet shows through. */
+.contact-field {
+  box-shadow:
+    inset 4px 4px 9px rgba(120, 106, 82, 0.4),
+    inset -4px -4px 9px rgba(255, 253, 247, 0.85);
+  transition: box-shadow 200ms ease;
+}
+.contact-field::placeholder {
+  color: rgba(120, 106, 82, 0.5);
+}
+.contact-field:focus {
+  box-shadow:
+    inset 5px 5px 11px rgba(120, 106, 82, 0.5),
+    inset -4px -4px 9px rgba(255, 253, 247, 0.9),
+    0 0 0 2px rgba(91, 143, 214, 0.35);
+}
+
+/* Bottom neumorphic button — press carves it inward. */
+.neu-button:not(:disabled):active {
+  box-shadow:
+    inset 5px 5px 12px rgba(120, 106, 82, 0.45),
+    inset -5px -5px 12px rgba(255, 253, 247, 0.9);
+  transform: translateY(1px);
+}
+
+/* ── Gallery modal ─────────────────────────────────────────────────── */
+.gallery-backdrop {
+  animation: gallery-backdrop-in 280ms ease forwards;
+}
+.gallery-card {
+  animation: gallery-card-in 440ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* keyed by slide index, so it replays on every slide change */
+.gallery-caption {
+  animation: gallery-caption-in 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes gallery-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes gallery-card-in {
+  from {
+    opacity: 0;
+    transform: scale(0.93) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+@keyframes gallery-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-backdrop,
+  .gallery-card,
+  .gallery-caption {
+    animation-duration: 0.01ms;
+  }
+}
+
+/* Contact "on its way" card — slides up as the plane fades out. */
+.contact-success {
+  animation: contact-success-in 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes contact-success-in {
+  from {
+    opacity: 0;
+    transform: translateY(44px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-success {
+    animation-duration: 0.01ms;
+  }
+}

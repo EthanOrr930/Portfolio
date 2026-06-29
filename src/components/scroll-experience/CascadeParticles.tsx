@@ -30,8 +30,15 @@ export function CascadeParticles({
     const cs = cascadeState.current;
     if (!cs) return;
 
+    // One-shot load intro: fly the particles in from an outward scatter while
+    // the whole cloud sheds a slight clockwise Y-spin. Both settle to a no-op
+    // (introProgress→1, spin→0), leaving scroll/fall behaviour untouched.
+    instance.intro.advance(delta);
+    if (groupRef.current) groupRef.current.rotation.y = instance.intro.spinAngle;
+
     instance.bufferWriter.writeIfChanged(cs, instance.bundle.attrs);
     instance.uniformsSync.sync(cs, delta, debugNoDepthScale);
+    instance.uniformsSync.setIntroProgress(instance.intro.flyIn);
     instance.physics.step(
       cs,
       {

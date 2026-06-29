@@ -36,6 +36,7 @@ export function ProjectCard({
               eyebrow={buildEyebrow(oneBasedIndex)}
               title={project.title}
               bullets={project.bullets}
+              repoUrl={project.repoUrl}
               revealed={revealed}
             />
           </CopyHalf>
@@ -49,6 +50,7 @@ export function ProjectCard({
               eyebrow={buildEyebrow(oneBasedIndex)}
               title={project.title}
               bullets={project.bullets}
+              repoUrl={project.repoUrl}
               revealed={revealed}
             />
           </CopyHalf>

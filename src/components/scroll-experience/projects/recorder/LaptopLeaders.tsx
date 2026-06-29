@@ -22,6 +22,7 @@ interface LaptopLeadersProps {
 export function LaptopLeaders({ live, leaders }: LaptopLeadersProps) {
   const dismissed = useRef(false);
   const liveStart = useRef(0);
+  const anchor = useRef<HTMLElement | null>(null);
   useEffect(() => onNotesLeaderDismiss(() => (dismissed.current = true)), []);
 
   useFrame((state) => {
@@ -29,7 +30,13 @@ export function LaptopLeaders({ live, leaders }: LaptopLeadersProps) {
     if (!live) liveStart.current = 0;
     else if (liveStart.current === 0) liveStart.current = state.clock.elapsedTime;
     const armed = live && state.clock.elapsedTime - liveStart.current >= SHOW_DELAY;
-    const btn = document.querySelector('[data-leader-anchor="notes"]') as HTMLElement | null;
+    // Cache the anchor element; only re-query the DOM when it's missing or
+    // has been detached (getBoundingClientRect below still runs every frame so
+    // the leader keeps tracking the button's live position).
+    if (!anchor.current || !anchor.current.isConnected) {
+      anchor.current = document.querySelector('[data-leader-anchor="notes"]');
+    }
+    const btn = anchor.current;
     const r = btn?.getBoundingClientRect();
     if (!armed || dismissed.current || !r || r.width === 0) return setOpacity(leader, 0);
     const x = r.left + r.width / 2;

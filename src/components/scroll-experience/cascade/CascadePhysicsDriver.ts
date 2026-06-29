@@ -43,10 +43,12 @@ export class CascadePhysicsDriver {
     field.prepare(camera, bundle.mesh, tracker);
     this.prepareResolver(cs, bundle, resolver, falloffDistance);
 
-    bundle.attrs.offset.needsUpdate = true;
+    // Both buffers are only mutated by integrateAllParticles, so when motion
+    // is disabled they never change — skip the GPU re-upload entirely.
     if (this.reducedMotion) return;
 
     this.integrateAllParticles(deps, dt);
+    bundle.attrs.offset.needsUpdate = true;
     bundle.attrs.spinBoost.needsUpdate = true;
   }
 

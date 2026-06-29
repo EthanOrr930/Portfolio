@@ -19,6 +19,7 @@ export interface CascadeUniformMap extends Record<string, THREE.IUniform> {
   u_falloffDistance: THREE.IUniform<number>;
   u_fallCascadeDir: THREE.IUniform<THREE.Vector3>;
   u_fallCascadeMode: THREE.IUniform<number>;
+  u_introProgress: THREE.IUniform<number>;
 }
 
 export function createCascadeUniforms(): CascadeUniformMap {
@@ -39,6 +40,9 @@ export function createCascadeUniforms(): CascadeUniformMap {
     u_falloffDistance:    { value: 2.8 },
     u_fallCascadeDir:     { value: new THREE.Vector3(0, 1, 0) },
     u_fallCascadeMode:    { value: 0 },
+    // 1 = figure fully assembled (no intro displacement). The IntroController
+    // drives this down toward 0 on first load, then back to 1 as it settles.
+    u_introProgress:      { value: 1 },
   };
 }
 
@@ -59,6 +63,11 @@ export class CascadeUniformsSync {
 
   get falloffDistance(): number {
     return this.uniforms.u_falloffDistance.value;
+  }
+
+  /** Load-intro assemble amount: 0 = scattered/spun, 1 = settled figure. */
+  setIntroProgress(value: number): void {
+    this.uniforms.u_introProgress.value = value;
   }
 
   private advanceTime(delta: number): void {

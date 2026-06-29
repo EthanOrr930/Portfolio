@@ -50,7 +50,8 @@ export class SingleBodyJelly {
   ): THREE.Vector3 {
     const dt = Math.min(delta, 0.033);
     tracker.update(dt);
-    this.dummy.updateMatrixWorld();
+    // field.prepare() calls dummy.updateWorldMatrix() before reading its
+    // matrix, so an extra updateMatrixWorld() here would be redundant.
     this.field.prepare(camera, this.dummy, tracker);
     this.field.integrate(
       0,

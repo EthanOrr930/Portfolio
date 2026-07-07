@@ -58,6 +58,24 @@ body {
   }
 }
 
+/* HeroText anchor — desktop pins the block's visual center on the
+   (1/3, 1/3) rule-of-thirds crosshair. On narrow viewports that anchor
+   pushes the title past the left edge, so phones center it horizontally
+   instead. width: max-content keeps the title on one line (the wrapper is
+   absolutely positioned, so shrink-to-fit would otherwise wrap it), capped
+   so it can never exceed the viewport. */
+.hero-anchor {
+  left: 33.333vw;
+  top: 33.333vh;
+}
+@media (max-width: 640px) {
+  .hero-anchor {
+    left: 50vw;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+  }
+}
+
 /* Project copy — slide-in-from-left, one-shot per reveal direction. The
    data-shown flag is toggled by ProjectsViewport via useProjectReveal; the
    CSS transition carries both the enter (shown=true) and exit (shown=false)

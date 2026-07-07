@@ -144,10 +144,8 @@ export function HeroText({
           on mount and stagger sequentially. */}
       <div
         ref={heroRef}
-        className="absolute flex flex-col items-start text-left text-zinc-900"
+        className="hero-anchor absolute flex flex-col items-start text-left text-zinc-900"
         style={{
-          left: "33.333vw",
-          top: "33.333vh",
           transform: "translate(-50%, -50%)",
           willChange: "transform, opacity",
         }}

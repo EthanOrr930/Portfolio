@@ -75,7 +75,19 @@ export function RecorderSection({ scrollVhRef, mountVh, fallbackVh }: RecorderSe
     <>
       <div className="fixed inset-0 z-40" style={fadeStyle(entered, interactive)}>
         {active && (
-          <Canvas camera={CAMERA} dpr={[1, 1.5]} gl={GL} style={{ background: "transparent" }}>
+          <Canvas
+            camera={CAMERA}
+            dpr={[1, 1.5]}
+            gl={GL}
+            // R3F hardcodes the Canvas wrapper to pointer-events:auto, which
+            // overrides this z-40 layer's own `none` — so a full-screen canvas
+            // that mounts a beat before the city copy exits (mountVh precedes the
+            // copy slide-out) swallows clicks meant for the z-30 Clad-in-Plaid
+            // Play button. Track the same `interactive` flag as the layer so the
+            // canvas only grabs pointers during the recorder's own finale.
+            // Mirrors CitySection's canvas pe:none fix.
+            style={{ background: "transparent", pointerEvents: interactive ? "auto" : "none" }}
+          >
             <RecorderStage dom={dom} laptopLeaders={laptopLeaders} introArmRef={introArmRef} onReady={onReady} onHandoff={onHandoff} />
           </Canvas>
         )}
